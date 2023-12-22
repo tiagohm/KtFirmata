@@ -30,8 +30,11 @@ data class FirmataDevice(
     private val longestI2CDelay = AtomicInteger(0)
     private val i2cDevices = HashMap<Int, FirmataI2CDevice>()
     private val analogMapping = HashMap<Int, Int>()
+    private val foundPins = Collections.synchronizedMap(LinkedHashMap<Int, FirmataPin>())
 
-    override val pins: MutableList<FirmataPin> = Collections.synchronizedList(ArrayList())
+    init {
+        transport.parser = parser
+    }
 
     override fun start() {
         if (!started.getAndSet(true)) {
@@ -96,11 +99,14 @@ data class FirmataDevice(
         listeners.remove(listener)
     }
 
+    override val pins
+        get() = foundPins.values
+
     override val pinsCount
-        get() = pins.size
+        get() = foundPins.size
 
     override fun pinAt(index: Int): Pin {
-        return pins[index]
+        return foundPins[index]!!
     }
 
     @Synchronized
@@ -158,6 +164,10 @@ data class FirmataDevice(
         transport.close()
     }
 
+    override fun toString(): String {
+        return "FirmataDevice(transport=$transport, pins=$foundPins, i2cDevices=$i2cDevices)"
+    }
+
     private val onProtocolReceive = Consumer<VersionMessageEvent> {
         LOG.info("Firmware version. major={}, minor={}", it.major, it.minor)
     }
@@ -172,7 +182,7 @@ data class FirmataDevice(
 
         it.supportedModes.forEach(pin::addSupportedMode)
 
-        pins.add(pin.index, pin)
+        foundPins[pin.index] = pin
 
         if (pin.supportedModes.isEmpty()) {
             // if the pin has no supported modes, its initialization is already done.
@@ -184,7 +194,7 @@ data class FirmataDevice(
     }
 
     private val onCapabilitiesFinished = Consumer<PinCapabilitiesFinishedEvent> {
-        if (initializedPins.get() == pins.size) {
+        if (initializedPins.get() == foundPins.size) {
             sendMessage(RequestAnalogMapping)
         } else {
             val pinId = pinStateRequestQueue.poll()
@@ -193,9 +203,9 @@ data class FirmataDevice(
     }
 
     private val onPinStateReceive = Consumer<PinStateEvent> {
-        val pin = pins[it.pinId]
+        val pin = foundPins[it.pinId] ?: return@Consumer
 
-        if (pin.mode == PinMode.NOT_INITIALIZED) {
+        if (pin.mode == PinMode.UNSUPPORTED) {
             pin.initMode(PinMode.resolve(it.mode))
         }
 
@@ -204,7 +214,7 @@ data class FirmataDevice(
             sendMessage(PinStateRequest(pid))
         }
 
-        if (initializedPins.incrementAndGet() == pins.size) {
+        if (initializedPins.incrementAndGet() == foundPins.size) {
             sendMessage(RequestAnalogMapping)
         }
     }
@@ -218,11 +228,11 @@ data class FirmataDevice(
 
             ready.set(true)
 
-            // all the pins are initialized so notification is sent to listeners
-            val initIsDone = IOEvent(this@FirmataDevice)
+            // All the pins are initialized so notification is sent to listeners
+            val event = IOEvent(this@FirmataDevice)
 
-            for (l in listeners) {
-                l.onStart(initIsDone)
+            for (listener in listeners) {
+                listener.onStart(event)
             }
         }
     }
@@ -232,24 +242,20 @@ data class FirmataDevice(
             if (it.pinId in analogMapping) {
                 val pinId = analogMapping[it.pinId]!!
 
-                if (pinId < pins.size) {
-                    val pin = pins[pinId]
+                val pin = foundPins[pinId] ?: return@Consumer
 
-                    if (pin.mode == PinMode.ANALOG) {
-                        pin.updateValue(it.value)
-                    }
+                if (pin.mode == PinMode.ANALOG) {
+                    pin.updateValue(it.value)
                 }
             }
         }
     }
 
     private val onDigitalMessageReceive = Consumer<DigitalMessageEvent> {
-        if (it.pinId < pins.size) {
-            val pin = pins[it.pinId]
+        val pin = foundPins[it.pinId] ?: return@Consumer
 
-            if (pin.mode == PinMode.INPUT || pin.mode == PinMode.PULL_UP) {
-                pin.updateValue(it.value)
-            }
+        if (pin.mode == PinMode.INPUT || pin.mode == PinMode.PULL_UP) {
+            pin.updateValue(it.value)
         }
     }
 

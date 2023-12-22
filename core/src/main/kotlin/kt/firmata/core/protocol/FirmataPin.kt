@@ -5,17 +5,16 @@ import kt.firmata.core.Pin
 import kt.firmata.core.PinEventListener
 import kt.firmata.core.PinMode
 import kt.firmata.core.protocol.message.*
-import java.lang.String
 import java.util.*
 import kotlin.concurrent.Volatile
 
-class FirmataPin(override val device: FirmataDevice, override val index: Int) : Pin {
+data class FirmataPin(override val device: FirmataDevice, override val index: Int) : Pin {
 
     private val listeners = Collections.synchronizedSet(HashSet<PinEventListener>())
 
     override val supportedModes: MutableSet<PinMode> = Collections.synchronizedSet(EnumSet.noneOf(PinMode::class.java))
 
-    @Volatile private var currentMode = PinMode.NOT_INITIALIZED
+    @Volatile private var currentMode = PinMode.UNSUPPORTED
     @Volatile private var currentValue = 0
 
     override var mode
@@ -33,7 +32,7 @@ class FirmataPin(override val device: FirmataDevice, override val index: Int) : 
     private fun setMode(mode: PinMode, minPulse: Int, maxPulse: Int) {
         if (supports(mode)) {
             if (currentMode != mode) {
-                if (mode === PinMode.SERVO) {
+                if (mode == PinMode.SERVO) {
                     device.sendMessage(ServoConfig(index, minPulse, maxPulse))
                     // The currentValue for a servo is unknown as the motor is
                     // send to the 1.5ms position when pinStateRequest is invoked
@@ -76,7 +75,7 @@ class FirmataPin(override val device: FirmataDevice, override val index: Int) : 
                     repeat(8) {
                         val p = device.pinAt(portId * 8 + it)
 
-                        if (p.mode === PinMode.OUTPUT && p.value > 0) {
+                        if (p.mode == PinMode.OUTPUT && p.value > 0) {
                             portValue = portValue or (1 shl it)
                         }
                     }
@@ -150,5 +149,9 @@ class FirmataPin(override val device: FirmataDevice, override val index: Int) : 
                 listener.onValueChange(event)
             }
         }
+    }
+
+    override fun toString(): kotlin.String {
+        return "FirmataPin(id=$index, mode=$currentMode, value=$currentValue)"
     }
 }

@@ -17,8 +17,7 @@ enum class PinMode {
     SERIAL,
     PULL_UP,
     UNSUPPORTED,
-    IGNORED,
-    NOT_INITIALIZED;
+    IGNORED;
 
     companion object {
 

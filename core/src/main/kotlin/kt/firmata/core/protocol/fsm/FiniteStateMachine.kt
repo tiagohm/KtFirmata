@@ -5,13 +5,13 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executor
 import java.util.function.Consumer
 
-class FiniteStateMachine(stateClass: Class<out State?>) : State {
+class FiniteStateMachine(type: Class<out State>) : State {
 
     private val handlers = ConcurrentHashMap<Class<*>, Consumer<in Event>>()
 
     @Volatile var eventHandlingExecutor: Executor = DirectExecutor
 
-    @Volatile var currentState = stateClass.getConstructor(FiniteStateMachine::class.java).newInstance(this)
+    @Volatile var currentState: State? = type.getConstructor(FiniteStateMachine::class.java).newInstance(this)
         private set
 
     override val finiteStateMashine
@@ -21,14 +21,13 @@ class FiniteStateMachine(stateClass: Class<out State?>) : State {
         handlers[Any::class.java] = Consumer<Event> {}
     }
 
-    fun transitTo(state: State?) {
+    fun transitTo(state: State) {
         currentState = state
     }
 
-    fun transitTo(stateClass: Class<out State?>) {
+    fun transitTo(type: Class<out State>) {
         try {
-            val nextState = stateClass.getConstructor(FiniteStateMachine::class.java).newInstance(this)
-            transitTo(nextState)
+            transitTo(type.getConstructor(FiniteStateMachine::class.java).newInstance(this))
         } catch (ex: ReflectiveOperationException) {
             throw IllegalArgumentException("Cannot instantiate the new state", ex)
         }

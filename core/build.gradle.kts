@@ -5,7 +5,8 @@ plugins {
 
 dependencies {
     implementation(libs.logback)
-    compileOnly("com.fazecast:jSerialComm:2.10.4")
+    compileOnly(libs.jSerialComm)
+    testImplementation(libs.jSerialComm)
     testImplementation(libs.bundles.kotest)
 }
 

@@ -61,6 +61,6 @@ object FirmataToken {
     const val I2C_READ_CONTINUOUS = 0x10
     const val I2C_STOP_READ_CONTINUOUS = 0x18
 
-    const val MIN_SAMPLING_INTERVAL: Int = 10
-    const val MAX_SAMPLING_INTERVAL: Int = 100
+    const val MIN_SAMPLING_INTERVAL = 10
+    const val MAX_SAMPLING_INTERVAL = 100
 }

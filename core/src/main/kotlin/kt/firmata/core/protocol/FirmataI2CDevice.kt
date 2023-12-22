@@ -81,6 +81,10 @@ data class FirmataI2CDevice internal constructor(private val master: FirmataDevi
         }
     }
 
+    override fun toString(): String {
+        return "FirmataI2CDevice(address=$address)"
+    }
+
     companion object {
 
         const val REGISTER_NOT_SET = -1

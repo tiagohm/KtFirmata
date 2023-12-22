@@ -22,9 +22,10 @@ data class ParsingStringMessageState(override val finiteStateMashine: FiniteStat
         @JvmStatic
         fun decode(buffer: ByteArray, offset: Int = 0, length: Int = buffer.size): String {
             val decoded = CharArray(length / 2)
+            var k = 0
 
             for (i in offset until offset + length step 2) {
-                decoded[i / 2] = (buffer[i] + (buffer[i + 1].toInt() shl 7)).toChar()
+                decoded[k++] = (buffer[i] + (buffer[i + 1].toInt() shl 7)).toChar()
             }
 
             return decoded.concatToString()

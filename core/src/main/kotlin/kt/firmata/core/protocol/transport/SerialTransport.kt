@@ -1,15 +1,23 @@
 package kt.firmata.core.protocol.transport
 
-import kt.firmata.core.protocol.parser.Parser
-
-class SerialTransport(portName: String, override val parser: Parser) : Transport {
+class SerialTransport(
+    portName: String,
+    baudRate: Int = 57600, dataBits: Int = 8,
+    stopBits: Int = 1, parity: Int = 0,
+) : Transport {
 
     private val delegate: Transport
+
+    override var parser
+        get() = delegate.parser
+        set(value) {
+            delegate.parser = value
+        }
 
     init {
         try {
             Class.forName("com.fazecast.jSerialComm.SerialPort", false, javaClass.classLoader)
-            delegate = JSerialCommTransport(portName, parser)
+            delegate = JSerialCommTransport(portName, baudRate, dataBits, stopBits, parity)
         } catch (e: ClassNotFoundException) {
             throw IllegalStateException(
                 "Serial communication library is not found in the classpath. "
@@ -37,5 +45,9 @@ class SerialTransport(portName: String, override val parser: Parser) : Transport
 
     override fun close() {
         delegate.close()
+    }
+
+    override fun toString(): String {
+        return delegate.toString()
     }
 }

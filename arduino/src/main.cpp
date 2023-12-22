@@ -31,11 +31,31 @@ FirmataReporting reporting;
 
 void systemResetCallback()
 {
+#ifndef ESP32
+    for (byte i = 0; i < TOTAL_PINS; i++)
+    {
+        if (IS_PIN_ANALOG(i))
+        {
+            Firmata.setPinMode(i, PIN_MODE_ANALOG);
+        }
+        else if (IS_PIN_DIGITAL(i))
+        {
+            Firmata.setPinMode(i, PIN_MODE_OUTPUT);
+        }
+    }
+#endif
+
     firmataExt.reset();
 }
 
 void initTransport()
 {
+#ifdef ESP8266
+    // Need to ignore pins 1 and 3 when using an ESP8266 board. These are used for the serial communication.
+    Firmata.setPinMode(1, PIN_MODE_IGNORE);
+    Firmata.setPinMode(3, PIN_MODE_IGNORE);
+#endif
+
     Firmata.begin(115200);
 }
 

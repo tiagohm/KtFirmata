@@ -5,7 +5,7 @@ import java.io.Closeable
 
 interface Transport : Closeable {
 
-    val parser: Parser
+    var parser: Parser
 
     fun start()
 

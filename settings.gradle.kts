@@ -16,6 +16,7 @@ buildCache {
 dependencyResolutionManagement {
     versionCatalogs {
         create("libs") {
+            library("jSerialComm", "com.fazecast:jSerialComm:2.10.4")
             library("logback", "ch.qos.logback:logback-classic:1.4.14")
             library("kotest-assertions-core", "io.kotest:kotest-assertions-core:5.8.0")
             library("kotest-runner-junit5", "io.kotest:kotest-runner-junit5:5.8.0")
