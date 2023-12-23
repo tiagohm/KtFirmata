@@ -1,6 +1,9 @@
-package kt.firmata.core.protocol
+package kt.firmata.core.protocol.board
 
 import kt.firmata.core.*
+import kt.firmata.core.protocol.DaemonThreadFactory
+import kt.firmata.core.protocol.FirmataI2CDevice
+import kt.firmata.core.protocol.FirmataPin
 import kt.firmata.core.protocol.fsm.*
 import kt.firmata.core.protocol.message.*
 import kt.firmata.core.protocol.parser.FirmataParser
@@ -15,11 +18,11 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Consumer
 
-data class FirmataDevice(
+abstract class Board(
     private val transport: Transport,
-    private val protocol: FiniteStateMachine = FiniteStateMachine(WaitingForMessageState::class.java),
 ) : IODevice {
 
+    private val protocol: FiniteStateMachine = FiniteStateMachine(WaitingForMessageState::class.java)
     private val parser = FirmataParser(protocol)
 
     private val listeners = Collections.synchronizedSet(LinkedHashSet<IODeviceEventListener>())
@@ -36,7 +39,23 @@ data class FirmataDevice(
         transport.parser = parser
     }
 
-    override fun start() {
+    abstract val numberOfDigitalPins: Int
+    abstract val numberOfAnalogPins: Int
+
+    open fun isPinBlink(pin: Pin) = false
+    abstract fun isPinDigital(pin: Pin): Boolean
+    abstract fun isPinAnalog(pin: Pin): Boolean
+    abstract fun isPinPWM(pin: Pin): Boolean
+    abstract fun isPinServo(pin: Pin): Boolean
+    abstract fun isPinI2C(pin: Pin): Boolean
+    abstract fun isPinSPI(pin: Pin): Boolean
+
+    abstract fun pinToDigitalIndex(pin: Pin): Int
+    abstract fun pinToAnalogIndex(pin: Pin): Int
+    abstract fun pinToPWMIndex(pin: Pin): Int
+    abstract fun pinToServoIndex(pin: Pin): Int
+
+    final override fun start() {
         if (!started.getAndSet(true)) {
             try {
                 parser.start()
@@ -50,7 +69,7 @@ data class FirmataDevice(
         }
     }
 
-    override fun stop() {
+    final override fun stop() {
         shutdown()
 
         val event = IOEvent(this)
@@ -60,7 +79,7 @@ data class FirmataDevice(
         }
     }
 
-    override fun ensureInitializationIsDone() {
+    final override fun ensureInitializationIsDone() {
         if (!started.get()) {
             try {
                 start()
@@ -88,29 +107,29 @@ data class FirmataDevice(
         }
     }
 
-    override val isReady
+    final override val isReady
         get() = ready.get()
 
-    override fun addEventListener(listener: IODeviceEventListener) {
+    final override fun addEventListener(listener: IODeviceEventListener) {
         listeners.add(listener)
     }
 
-    override fun removeEventListener(listener: IODeviceEventListener) {
+    final override fun removeEventListener(listener: IODeviceEventListener) {
         listeners.remove(listener)
     }
 
-    override val pins
+    final override val pins
         get() = foundPins.values
 
-    override val pinsCount
+    final override val pinsCount
         get() = foundPins.size
 
-    override fun pinAt(index: Int): Pin {
+    final override fun pinAt(index: Int): Pin {
         return foundPins[index]!!
     }
 
     @Synchronized
-    override fun i2CDevice(address: Int): I2CDevice? {
+    final override fun i2CDevice(address: Int): I2CDevice? {
         if (address !in i2cDevices) {
             i2cDevices[address] = FirmataI2CDevice(this, address)
         }
@@ -120,16 +139,16 @@ data class FirmataDevice(
         return i2cDevices[address]
     }
 
-    override fun <T : Event> addProtocolMessageHandler(type: Class<out T>, handler: Consumer<in T>) {
+    final override fun <T : Event> addProtocolMessageHandler(type: Class<out T>, handler: Consumer<in T>) {
         protocol.addHandler(type, handler)
     }
 
-    override fun sendMessage(message: FirmataMessage) {
-        message.sendTo(transport)
+    final override fun sendMessage(message: FirmataMessage) {
+        message.sendTo(this, transport)
         transport.flush()
     }
 
-    override fun sendMessage(message: String) {
+    final override fun sendMessage(message: String) {
         if (message.length > 15) {
             LOG.warn("Firmata 2.3.6 implementation has input buffer only 32 bytes so you can safely send only 15 characters log messages")
         }
@@ -137,7 +156,7 @@ data class FirmataDevice(
         sendMessage(Text(message))
     }
 
-    fun pinChanged(event: IOEvent) {
+    internal fun pinChanged(event: IOEvent) {
         for (listener in listeners) {
             listener.onPinChange(event)
         }
@@ -158,14 +177,14 @@ data class FirmataDevice(
 
     private fun shutdown() {
         ready.set(false)
-        sendMessage(AnalogReport(false))
-        sendMessage(DigitalReport(false))
+        sendMessage(ReportAnalog(false))
+        sendMessage(ReportDigital(false))
         parser.stop()
         transport.close()
     }
 
     override fun toString(): String {
-        return "FirmataDevice(transport=$transport, pins=$foundPins, i2cDevices=$i2cDevices)"
+        return "Board(transport=$transport, pins=$foundPins, i2cDevices=$i2cDevices)"
     }
 
     private val onProtocolReceive = Consumer<VersionMessageEvent> {
@@ -178,7 +197,7 @@ data class FirmataDevice(
     }
 
     private val onCapabilitiesReceive = Consumer<PinCapabilityResponseEvent> {
-        val pin = FirmataPin(this@FirmataDevice, it.pinId)
+        val pin = FirmataPin(this@Board, it.pinId)
 
         it.supportedModes.forEach(pin::addSupportedMode)
 
@@ -223,13 +242,10 @@ data class FirmataDevice(
         synchronized(analogMapping) {
             analogMapping.putAll(it.mapping)
 
-            sendMessage(AnalogReport(true))
-            sendMessage(DigitalReport(true))
-
             ready.set(true)
 
             // All the pins are initialized so notification is sent to listeners
-            val event = IOEvent(this@FirmataDevice)
+            val event = IOEvent(this@Board)
 
             for (listener in listeners) {
                 listener.onStart(event)
@@ -265,7 +281,7 @@ data class FirmataDevice(
     }
 
     private val onStringMessageReceive = Consumer<StringMessageEvent> {
-        val evt = IOEvent(this@FirmataDevice)
+        val evt = IOEvent(this@Board)
 
         for (listener in listeners) {
             listener.onMessageReceive(evt, it.message)
@@ -315,6 +331,6 @@ data class FirmataDevice(
         private const val TIMEOUT = 15000L
 
         @JvmStatic private val THREAD_FACTORY = DaemonThreadFactory("Firmata-Event-Handler")
-        @JvmStatic private val LOG = LoggerFactory.getLogger(FirmataDevice::class.java)
+        @JvmStatic private val LOG = LoggerFactory.getLogger(Board::class.java)
     }
 }

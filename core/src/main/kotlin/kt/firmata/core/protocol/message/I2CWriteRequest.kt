@@ -1,5 +1,6 @@
 package kt.firmata.core.protocol.message
 
+import kt.firmata.core.protocol.board.Board
 import kt.firmata.core.protocol.parser.FirmataToken.END_SYSEX
 import kt.firmata.core.protocol.parser.FirmataToken.I2C_REQUEST
 import kt.firmata.core.protocol.parser.FirmataToken.I2C_WRITE
@@ -11,7 +12,7 @@ import kt.firmata.core.protocol.transport.Transport
 @Suppress("ArrayInDataClass")
 data class I2CWriteRequest(val slaveAddress: Int, val bytesToWrite: ByteArray) : FirmataMessage {
 
-    override fun sendTo(transport: Transport) {
+    override fun sendTo(board: Board, transport: Transport) {
         transport.write(START_SYSEX)
         transport.write(I2C_REQUEST)
         transport.write(slaveAddress)

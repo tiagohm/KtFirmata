@@ -2,28 +2,33 @@ import io.kotest.core.spec.style.StringSpec
 import kotlinx.coroutines.delay
 import kt.firmata.core.IODeviceEventListener
 import kt.firmata.core.IOEvent
-import kt.firmata.core.protocol.FirmataDevice
+import kt.firmata.core.protocol.board.ArduinoUno
 import kt.firmata.core.protocol.transport.SerialTransport
+import kt.firmata.hardware.LM35
 
 class PICSimLabTest : StringSpec(), IODeviceEventListener {
 
     init {
         "report" {
-            val transport = SerialTransport("COM4")
-            val device = FirmataDevice(transport)
+            val transport = SerialTransport("COM5", 115200)
+            val board = ArduinoUno(transport)
 
-            device.addEventListener(this@PICSimLabTest)
+            board.addEventListener(this@PICSimLabTest)
 
-            device.start()
-            device.ensureInitializationIsDone()
+            board.start()
+            board.ensureInitializationIsDone()
 
-            for (pin in device.pins) {
-                println(pin)
+            val thermometer = LM35(board, board.pinAt(ArduinoUno.A0))
+
+            thermometer.registerThermometerListener {
+                println(it.temperature)
             }
+
+            thermometer.start()
 
             delay(120000)
 
-            device.stop()
+            board.stop()
         }
     }
 
@@ -36,7 +41,7 @@ class PICSimLabTest : StringSpec(), IODeviceEventListener {
     }
 
     override fun onPinChange(event: IOEvent) {
-        println("pinChange: ${event.pin}")
+        // println("pinChange: ${event.pin}")
     }
 
     override fun onMessageReceive(event: IOEvent, message: String) {

@@ -3,6 +3,7 @@ package kt.firmata.core.protocol
 import kt.firmata.core.I2CDevice
 import kt.firmata.core.I2CEvent
 import kt.firmata.core.I2CListener
+import kt.firmata.core.protocol.board.Board
 import kt.firmata.core.protocol.message.I2CReadRequest
 import kt.firmata.core.protocol.message.I2CStopContinuousRequest
 import kt.firmata.core.protocol.message.I2CWriteRequest
@@ -10,7 +11,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentSkipListSet
 import java.util.concurrent.atomic.AtomicBoolean
 
-data class FirmataI2CDevice internal constructor(private val master: FirmataDevice, override val address: Int) : I2CDevice {
+data class FirmataI2CDevice internal constructor(private val master: Board, override val address: Int) : I2CDevice {
 
     private val receivingUpdates = AtomicBoolean(false)
     private val callbacks = ConcurrentHashMap<Int, I2CListener>()

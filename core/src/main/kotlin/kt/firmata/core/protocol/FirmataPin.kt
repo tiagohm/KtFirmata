@@ -4,11 +4,12 @@ import kt.firmata.core.IOEvent
 import kt.firmata.core.Pin
 import kt.firmata.core.PinEventListener
 import kt.firmata.core.PinMode
+import kt.firmata.core.protocol.board.Board
 import kt.firmata.core.protocol.message.*
 import java.util.*
 import kotlin.concurrent.Volatile
 
-data class FirmataPin(override val device: FirmataDevice, override val index: Int) : Pin {
+data class FirmataPin(override val device: Board, override val index: Int) : Pin {
 
     private val listeners = Collections.synchronizedSet(HashSet<PinEventListener>())
 
@@ -21,19 +22,19 @@ data class FirmataPin(override val device: FirmataDevice, override val index: In
         get() = currentMode
         set(mode) {
             // Arduino defaults (https://www.arduino.cc/en/Reference/ServoAttach)
-            setMode(mode, 544, 2400)
+            updateMode(mode, 544, 2400)
         }
 
     override fun servoMode(minPulse: Int, maxPulse: Int) {
-        setMode(PinMode.SERVO, minPulse, maxPulse)
+        updateMode(PinMode.SERVO, minPulse, maxPulse)
     }
 
     @Synchronized
-    private fun setMode(mode: PinMode, minPulse: Int, maxPulse: Int) {
+    private fun updateMode(mode: PinMode, minPulse: Int, maxPulse: Int) {
         if (supports(mode)) {
             if (currentMode != mode) {
                 if (mode == PinMode.SERVO) {
-                    device.sendMessage(ServoConfig(index, minPulse, maxPulse))
+                    device.sendMessage(ServoConfig(this, minPulse, maxPulse))
                     // The currentValue for a servo is unknown as the motor is
                     // send to the 1.5ms position when pinStateRequest is invoked
                     currentValue = -1
@@ -52,7 +53,7 @@ data class FirmataPin(override val device: FirmataDevice, override val index: In
                 device.sendMessage(PinStateRequest(index))
             }
         } else {
-            throw IllegalArgumentException(String.format("Pin %d does not support mode %s", index, mode))
+            throw IllegalArgumentException("Pin $index does not support mode $mode")
         }
     }
 
@@ -80,22 +81,22 @@ data class FirmataPin(override val device: FirmataDevice, override val index: In
                         }
                     }
 
-                    val bitmask = 1 shl pinInPort
+                    val bit = 1 shl pinInPort
                     val isOn = value > 0
 
                     portValue = if (isOn) {
-                        portValue or bitmask
+                        portValue or bit
                     } else {
-                        portValue and bitmask.inv()
+                        portValue and bit.inv()
                     }
 
-                    message = SetDigitalPinValue(portId, portValue)
+                    message = DigitalWrite(portId, portValue)
                     newValue = if (isOn) 1 else 0
                 }
                 PinMode.ANALOG,
                 PinMode.PWM,
                 PinMode.SERVO -> {
-                    message = SetAnalogPinValue(index, value)
+                    message = AnalogWrite(this, value)
                     newValue = value
                 }
                 else -> {

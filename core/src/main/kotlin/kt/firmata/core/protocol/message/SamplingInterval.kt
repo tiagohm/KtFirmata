@@ -1,5 +1,6 @@
 package kt.firmata.core.protocol.message
 
+import kt.firmata.core.protocol.board.Board
 import kt.firmata.core.protocol.parser.FirmataToken.END_SYSEX
 import kt.firmata.core.protocol.parser.FirmataToken.MAX_SAMPLING_INTERVAL
 import kt.firmata.core.protocol.parser.FirmataToken.MIN_SAMPLING_INTERVAL
@@ -11,7 +12,7 @@ import kotlin.math.min
 
 data class SamplingInterval(val interval: Int) : FirmataMessage {
 
-    override fun sendTo(transport: Transport) {
+    override fun sendTo(board: Board, transport: Transport) {
         val value = max(MIN_SAMPLING_INTERVAL, min(interval, MAX_SAMPLING_INTERVAL))
 
         transport.write(START_SYSEX)
