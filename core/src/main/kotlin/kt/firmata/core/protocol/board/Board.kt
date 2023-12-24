@@ -129,14 +129,14 @@ abstract class Board(
     }
 
     @Synchronized
-    final override fun i2CDevice(address: Int): I2CDevice? {
+    final override fun i2CDevice(address: Int): I2CDevice {
         if (address !in i2cDevices) {
             i2cDevices[address] = FirmataI2CDevice(this, address)
         }
 
         sendMessage(I2CConfigRequest(longestI2CDelay.get()))
 
-        return i2cDevices[address]
+        return i2cDevices[address]!!
     }
 
     final override fun <T : Event> addProtocolMessageHandler(type: Class<out T>, handler: Consumer<in T>) {
@@ -224,9 +224,7 @@ abstract class Board(
     private val onPinStateReceive = Consumer<PinStateEvent> {
         val pin = foundPins[it.pinId] ?: return@Consumer
 
-        if (pin.mode == PinMode.UNSUPPORTED) {
-            pin.initMode(PinMode.resolve(it.mode))
-        }
+        pin.initMode(it.mode)
 
         if (!pinStateRequestQueue.isEmpty()) {
             val pid = pinStateRequestQueue.poll()

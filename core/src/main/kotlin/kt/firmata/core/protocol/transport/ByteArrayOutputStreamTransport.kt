@@ -6,6 +6,7 @@ abstract class ByteArrayOutputStreamTransport(size: Int = 32) : Transport, ByteA
 
     protected abstract fun flushBytes(bytes: ByteArray, size: Int)
 
+    @Synchronized
     final override fun flush() {
         flushBytes(buf, count)
         reset()

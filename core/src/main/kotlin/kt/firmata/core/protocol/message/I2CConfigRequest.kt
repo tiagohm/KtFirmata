@@ -6,7 +6,7 @@ import kt.firmata.core.protocol.parser.FirmataToken.I2C_CONFIG
 import kt.firmata.core.protocol.parser.FirmataToken.START_SYSEX
 import kt.firmata.core.protocol.transport.Transport
 
-data class I2CConfigRequest(val delayInMicroseconds: Int) : FirmataMessage {
+data class I2CConfigRequest(val delayInMicroseconds: Int = 0) : FirmataMessage {
 
     init {
         require(delayInMicroseconds >= 0) { "delay cannot be less than 0 microseconds." }

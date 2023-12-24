@@ -1,3 +1,5 @@
 package kt.firmata.core.protocol.fsm
 
-data class PinStateEvent(val pinId: Int, val mode: Int, val value: Int) : Event
+import kt.firmata.core.PinMode
+
+data class PinStateEvent(val pinId: Int, val mode: PinMode, val value: Int) : Event

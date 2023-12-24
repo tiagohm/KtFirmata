@@ -1,5 +1,6 @@
 package kt.firmata.core.protocol.parser
 
+import kt.firmata.core.PinMode
 import kt.firmata.core.protocol.fsm.AbstractState
 import kt.firmata.core.protocol.fsm.FiniteStateMachine
 import kt.firmata.core.protocol.fsm.PinStateEvent
@@ -15,7 +16,7 @@ data class PinStateParsingState(override val finiteStateMashine: FiniteStateMach
                 value = value or (buf[i].toInt() shl ((i - 2) * 7))
             }
 
-            publish(PinStateEvent(buf[0].toInt(), buf[1].toInt(), value))
+            publish(PinStateEvent(buf[0].toInt(), PinMode.resolve(buf[1].toInt()), value))
             transitTo<WaitingForMessageState>()
         } else {
             write(b)

@@ -7,15 +7,15 @@ import kt.firmata.core.protocol.board.Board
 import kt.firmata.core.protocol.message.I2CReadRequest
 import kt.firmata.core.protocol.message.I2CStopContinuousRequest
 import kt.firmata.core.protocol.message.I2CWriteRequest
+import java.util.*
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.ConcurrentSkipListSet
 import java.util.concurrent.atomic.AtomicBoolean
 
 data class FirmataI2CDevice internal constructor(private val master: Board, override val address: Int) : I2CDevice {
 
     private val receivingUpdates = AtomicBoolean(false)
     private val callbacks = ConcurrentHashMap<Int, I2CListener>()
-    private val subscribers = ConcurrentSkipListSet<I2CListener>()
+    private val subscribers = Collections.synchronizedSet(HashSet<I2CListener>())
 
     override fun delay(delay: Int) {
         master.i2cDelay(delay)
@@ -74,9 +74,7 @@ data class FirmataI2CDevice internal constructor(private val master: Board, over
         val listener = callbacks.remove(register)
 
         if (listener == null) {
-            for (subscriber in subscribers) {
-                subscriber.onReceive(event)
-            }
+            subscribers.forEach { it.onReceive(event) }
         } else {
             listener.onReceive(event)
         }

@@ -20,7 +20,7 @@ interface IODevice {
 
     fun pinAt(index: Int): Pin?
 
-    fun i2CDevice(address: Int): I2CDevice?
+    fun i2CDevice(address: Int): I2CDevice
 
     fun addEventListener(listener: IODeviceEventListener)
 
