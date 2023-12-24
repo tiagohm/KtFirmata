@@ -7,7 +7,7 @@ import kt.firmata.core.protocol.transport.SerialTransport
 import kt.firmata.hardware.*
 import java.time.Duration
 
-class PICSimLabTest : StringSpec(), IODeviceEventListener, ThermometerListener<Thermometer>, HygrometerListener<Hygrometer> {
+class PICSimLabTest : StringSpec(), IODeviceEventListener, ThermometerListener<Thermometer<*>>, HygrometerListener<Hygrometer<*>> {
 
     init {
         "report" {
@@ -50,11 +50,11 @@ class PICSimLabTest : StringSpec(), IODeviceEventListener, ThermometerListener<T
         println("$event: $message")
     }
 
-    override fun onTemperatureChange(thermometer: Thermometer) {
+    override fun onTemperatureChange(thermometer: Thermometer<*>) {
         println("${thermometer::class.simpleName}: ${thermometer.temperature} °C")
     }
 
-    override fun onHumidityChange(hygrometer: Hygrometer) {
+    override fun onHumidityChange(hygrometer: Hygrometer<*>) {
         println("${hygrometer::class.simpleName}: ${hygrometer.humidity} %")
     }
 }

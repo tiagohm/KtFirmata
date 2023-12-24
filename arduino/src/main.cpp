@@ -80,7 +80,7 @@ void initFirmata()
 void setup()
 {
     // Do this before initTransport(), because some client libraries expect that a reset sends this automatically.
-    Firmata.setFirmwareNameAndVersion("ConfigurableFirmata", FIRMATA_FIRMWARE_MAJOR_VERSION, FIRMATA_FIRMWARE_MINOR_VERSION);
+    Firmata.setFirmwareNameAndVersion("Observatorio", FIRMATA_FIRMWARE_MAJOR_VERSION, FIRMATA_FIRMWARE_MINOR_VERSION);
     initTransport();
     initFirmata();
 

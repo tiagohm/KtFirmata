@@ -4,6 +4,7 @@ import kt.firmata.core.I2CEvent
 import kt.firmata.core.I2CListener
 import kt.firmata.core.OnStopListener
 import kt.firmata.core.protocol.board.Board
+import org.slf4j.LoggerFactory
 import java.time.Duration
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
@@ -12,7 +13,7 @@ import kotlin.math.max
 // https://cdn-shop.adafruit.com/product-files/3721/AM2320.pdf
 // https://github.com/dotnet/iot/blob/main/src/devices/Am2320/Am2320.cs
 
-class AM2320(val board: Board) : Thermometer, Hygrometer, Runnable, I2CListener {
+class AM2320(val board: Board) : Thermometer<AM2320>, Hygrometer<AM2320>, Runnable, I2CListener {
 
     private val thermometerListeners = HashSet<ThermometerListener<AM2320>>()
     private val hygrometerListeners = HashSet<HygrometerListener<AM2320>>()
@@ -26,23 +27,25 @@ class AM2320(val board: Board) : Thermometer, Hygrometer, Runnable, I2CListener 
     @Volatile override var temperature = 0.0
         private set
 
+    override val name = "AM2320"
+
     init {
         board.addEventListener(OnStopListener { stop() })
     }
 
-    fun registerThermometerListener(listener: ThermometerListener<AM2320>) {
+    override fun registerThermometerListener(listener: ThermometerListener<AM2320>) {
         thermometerListeners.add(listener)
     }
 
-    fun unregisterThermometerListener(listener: ThermometerListener<AM2320>) {
+    override fun unregisterThermometerListener(listener: ThermometerListener<AM2320>) {
         thermometerListeners.remove(listener)
     }
 
-    fun registerHygrometerListener(listener: HygrometerListener<AM2320>) {
+    override fun registerHygrometerListener(listener: HygrometerListener<AM2320>) {
         hygrometerListeners.add(listener)
     }
 
-    fun unregisterHygrometerListener(listener: HygrometerListener<AM2320>) {
+    override fun unregisterHygrometerListener(listener: HygrometerListener<AM2320>) {
         hygrometerListeners.remove(listener)
     }
 
@@ -71,6 +74,9 @@ class AM2320(val board: Board) : Thermometer, Hygrometer, Runnable, I2CListener 
 
             thermometerListeners.forEach { it.onTemperatureChange(this) }
             hygrometerListeners.forEach { it.onHumidityChange(this) }
+        } else if (event.data[0] == event.data[1] && event.data[0] == 0.toByte()) {
+            LOG.warn("Cannot handle I2C data. Is the sensor awake?")
+            run()
         }
     }
 
@@ -78,7 +84,7 @@ class AM2320(val board: Board) : Thermometer, Hygrometer, Runnable, I2CListener 
     override fun start(freq: Duration) {
         if (task == null) {
             device.subscribe(this)
-            task = HardwareScheduler.scheduleAtFixedRate(this, 0L, max(MIN_DELAY.toMillis(), freq.toMillis()), TimeUnit.MILLISECONDS)
+            task = HardwareScheduler.scheduleAtFixedRate(this, 1000L, max(MIN_DELAY.toMillis(), freq.toMillis()), TimeUnit.MILLISECONDS)
         }
     }
 
@@ -101,5 +107,7 @@ class AM2320(val board: Board) : Thermometer, Hygrometer, Runnable, I2CListener 
         @JvmStatic private val READ = byteArrayOf(READ_REGISTER_CMD.toByte(), REG_HUM_H.toByte(), 4)
 
         @JvmStatic private val MIN_DELAY = Duration.ofSeconds(2L)
+
+        @JvmStatic private val LOG = LoggerFactory.getLogger(AM2320::class.java)
     }
 }
