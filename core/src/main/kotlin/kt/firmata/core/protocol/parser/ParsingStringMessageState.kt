@@ -21,14 +21,7 @@ data class ParsingStringMessageState(override val finiteStateMashine: FiniteStat
 
         @JvmStatic
         fun decode(buffer: ByteArray, offset: Int = 0, length: Int = buffer.size): String {
-            val decoded = CharArray(length / 2)
-            var k = 0
-
-            for (i in offset until offset + length step 2) {
-                decoded[k++] = (buffer[i] + (buffer[i + 1].toInt() shl 7)).toChar()
-            }
-
-            return decoded.concatToString()
+            return CharArray(length / 2) { Encoder7Bit.decode(buffer, offset + it * 2).toChar() }.concatToString()
         }
     }
 }

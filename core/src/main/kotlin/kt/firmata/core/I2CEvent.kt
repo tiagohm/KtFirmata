@@ -4,5 +4,5 @@ package kt.firmata.core
 data class I2CEvent(
     val device: I2CDevice? = null,
     val register: Int = 0,
-    val data: ByteArray = ByteArray(0),
+    val data: IntArray = IntArray(0),
 )

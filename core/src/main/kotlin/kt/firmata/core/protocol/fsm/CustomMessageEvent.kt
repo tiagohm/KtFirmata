@@ -1,3 +1,5 @@
 package kt.firmata.core.protocol.fsm
 
-data class CustomMessageEvent(val message: ByteArray) : Event
+import java.nio.ByteBuffer
+
+data class CustomMessageEvent(val message: ByteBuffer) : Event

@@ -22,7 +22,7 @@ data class LM35(val board: Board, val pin: Pin, val aref: Double = 5.0) : Thermo
     override val name = "LM35"
 
     init {
-        board.addEventListener(OnStopListener { stop() })
+        board.addEventListener(OnStopListener { close() })
     }
 
     override fun registerThermometerListener(listener: ThermometerListener<LM35>) {
@@ -41,7 +41,7 @@ data class LM35(val board: Board, val pin: Pin, val aref: Double = 5.0) : Thermo
     }
 
     @Synchronized
-    override fun stop() {
+    override fun close() {
         board.removeEventListener(this)
         board.sendMessage(ReportAnalogPin(pin, false))
     }

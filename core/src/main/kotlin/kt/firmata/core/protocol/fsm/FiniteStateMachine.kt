@@ -29,7 +29,7 @@ class FiniteStateMachine(type: Class<out State>) : State {
         try {
             transitTo(type.getConstructor(FiniteStateMachine::class.java).newInstance(this))
         } catch (ex: ReflectiveOperationException) {
-            throw IllegalArgumentException("Cannot instantiate the new state", ex)
+            throw IllegalArgumentException("Cannot instantiate the new state from type: $type", ex)
         }
     }
 

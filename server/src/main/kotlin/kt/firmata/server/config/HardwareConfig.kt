@@ -6,6 +6,7 @@ import kt.firmata.core.protocol.board.ArduinoUno
 import kt.firmata.core.protocol.board.Board
 import kt.firmata.core.protocol.transport.SerialTransport
 import kt.firmata.hardware.AM2320
+import kt.firmata.hardware.BMP180
 import kt.firmata.hardware.LM35
 import org.slf4j.LoggerFactory
 import org.springframework.context.annotation.Bean
@@ -52,13 +53,18 @@ class HardwareConfig {
     }
 
     @Bean
+    fun lm35(board: Board): LM35 {
+        return LM35(board, board.pinAt(ArduinoUno.A0))
+    }
+
+    @Bean
     fun am2320(board: Board): AM2320 {
         return AM2320(board)
     }
 
     @Bean
-    fun lm35(board: Board): LM35 {
-        return LM35(board, board.pinAt(ArduinoUno.A0))
+    fun bmp180(board: Board): BMP180 {
+        return BMP180(board)
     }
 
     companion object {

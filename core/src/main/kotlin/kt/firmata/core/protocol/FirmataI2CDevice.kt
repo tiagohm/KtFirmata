@@ -69,7 +69,7 @@ data class FirmataI2CDevice internal constructor(private val master: Board, over
         }
     }
 
-    internal fun onReceive(register: Int, message: ByteArray) {
+    internal fun onReceive(register: Int, message: IntArray) {
         val event = I2CEvent(this, register, message)
         val listener = callbacks.remove(register)
 

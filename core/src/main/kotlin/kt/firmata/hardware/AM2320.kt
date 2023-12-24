@@ -12,6 +12,7 @@ import kotlin.math.max
 
 // https://cdn-shop.adafruit.com/product-files/3721/AM2320.pdf
 // https://github.com/dotnet/iot/blob/main/src/devices/Am2320/Am2320.cs
+// https://github.com/adafruit/Adafruit_AM2320
 
 class AM2320(val board: Board) : Thermometer<AM2320>, Hygrometer<AM2320>, Runnable, I2CListener {
 
@@ -30,7 +31,7 @@ class AM2320(val board: Board) : Thermometer<AM2320>, Hygrometer<AM2320>, Runnab
     override val name = "AM2320"
 
     init {
-        board.addEventListener(OnStopListener { stop() })
+        board.addEventListener(OnStopListener { close() })
     }
 
     override fun registerThermometerListener(listener: ThermometerListener<AM2320>) {
@@ -67,14 +68,14 @@ class AM2320(val board: Board) : Thermometer<AM2320>, Hygrometer<AM2320>, Runnab
     }
 
     override fun onReceive(event: I2CEvent) {
-        if (event.data[0] == READ_REGISTER_CMD.toByte()) {
-            humidity = ((event.data[2].toInt() and 0xFF shl 8) or (event.data[3].toInt() and 0xFF)) / 10.0
-            temperature = ((event.data[4].toInt() and 0x7F shl 8) or (event.data[5].toInt() and 0xFF)) / 10.0
-            if (event.data[4].toInt() and 0x80 != 0) temperature = -temperature
+        if (event.data[0] == READ_REGISTER_CMD) {
+            humidity = ((event.data[2] shl 8) or event.data[3]) / 10.0
+            temperature = ((event.data[4] and 0x7F shl 8) or event.data[5]) / 10.0
+            if (event.data[4] and 0x80 != 0) temperature = -temperature
 
             thermometerListeners.forEach { it.onTemperatureChange(this) }
             hygrometerListeners.forEach { it.onHumidityChange(this) }
-        } else if (event.data[0] == event.data[1] && event.data[0] == 0.toByte()) {
+        } else if (event.data[0] == event.data[1] && event.data[0] == 0) {
             LOG.warn("Cannot handle I2C data. Is the sensor awake?")
             run()
         }
@@ -89,8 +90,7 @@ class AM2320(val board: Board) : Thermometer<AM2320>, Hygrometer<AM2320>, Runnab
     }
 
     @Synchronized
-    override fun stop() {
-        device.unsubscribe(this)
+    override fun close() {
         task?.cancel(true)
         task = null
     }

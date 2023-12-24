@@ -7,7 +7,9 @@ import kt.firmata.core.protocol.transport.SerialTransport
 import kt.firmata.hardware.*
 import java.time.Duration
 
-class PICSimLabTest : StringSpec(), IODeviceEventListener, ThermometerListener<Thermometer<*>>, HygrometerListener<Hygrometer<*>> {
+class PICSimLabTest : StringSpec(), IODeviceEventListener,
+    ThermometerListener<Thermometer<*>>, HygrometerListener<Hygrometer<*>>,
+    BarometerListener<Barometer<*>>, AltimeterListener<Altimeter<*>> {
 
     init {
         "report" {
@@ -21,16 +23,22 @@ class PICSimLabTest : StringSpec(), IODeviceEventListener, ThermometerListener<T
 
             val thermometer = LM35(board, board.pinAt(ArduinoUno.A0))
             thermometer.registerThermometerListener(this@PICSimLabTest)
-            thermometer.start()
+            // thermometer.start()
 
             val hygrometer = AM2320(board)
             hygrometer.registerThermometerListener(this@PICSimLabTest)
             hygrometer.registerHygrometerListener(this@PICSimLabTest)
             hygrometer.start(Duration.ofSeconds(15))
 
+            val barometer = BMP180(board)
+            barometer.registerThermometerListener(this@PICSimLabTest)
+            barometer.registerBarometerListener(this@PICSimLabTest)
+            barometer.registerAltimeterListener(this@PICSimLabTest)
+            barometer.start(Duration.ofSeconds(15))
+
             delay(120000)
 
-            board.stop()
+            board.close()
         }
     }
 
@@ -56,5 +64,13 @@ class PICSimLabTest : StringSpec(), IODeviceEventListener, ThermometerListener<T
 
     override fun onHumidityChange(hygrometer: Hygrometer<*>) {
         println("${hygrometer::class.simpleName}: ${hygrometer.humidity} %")
+    }
+
+    override fun onPressureChange(barometer: Barometer<*>) {
+        println("${barometer::class.simpleName}: ${barometer.pressure} Pa")
+    }
+
+    override fun onAltitudeChange(altimeter: Altimeter<*>) {
+        println("${altimeter::class.simpleName}: ${altimeter.altitude} m")
     }
 }
