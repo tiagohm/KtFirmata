@@ -17,7 +17,7 @@ interface IODevice : Closeable {
 
     val pinsCount: Int
 
-    fun pinAt(index: Int): Pin?
+    fun pinAt(index: Int): Pin
 
     fun i2CDevice(address: Int): I2CDevice
 

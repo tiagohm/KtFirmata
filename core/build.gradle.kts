@@ -4,6 +4,7 @@ plugins {
 }
 
 dependencies {
+    api(libs.apache.commons)
     implementation(libs.logback)
     compileOnly(libs.jSerialComm)
     testImplementation(libs.jSerialComm)

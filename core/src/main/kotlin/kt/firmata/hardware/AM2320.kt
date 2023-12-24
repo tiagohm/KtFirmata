@@ -2,8 +2,8 @@ package kt.firmata.hardware
 
 import kt.firmata.core.I2CEvent
 import kt.firmata.core.I2CListener
+import kt.firmata.core.IODevice
 import kt.firmata.core.OnStopListener
-import kt.firmata.core.protocol.board.Board
 import org.slf4j.LoggerFactory
 import java.time.Duration
 import java.util.concurrent.ScheduledFuture
@@ -14,7 +14,7 @@ import kotlin.math.max
 // https://github.com/dotnet/iot/blob/main/src/devices/Am2320/Am2320.cs
 // https://github.com/adafruit/Adafruit_AM2320
 
-class AM2320(val board: Board) : Thermometer<AM2320>, Hygrometer<AM2320>, Runnable, I2CListener {
+class AM2320(val board: IODevice) : Thermometer<AM2320>, Hygrometer<AM2320>, Runnable, I2CListener {
 
     private val thermometerListeners = HashSet<ThermometerListener<AM2320>>()
     private val hygrometerListeners = HashSet<HygrometerListener<AM2320>>()

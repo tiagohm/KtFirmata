@@ -1,6 +1,6 @@
 package kt.firmata.hardware
 
-import kt.firmata.core.protocol.board.Board
+import kt.firmata.core.IODevice
 import org.slf4j.LoggerFactory
 import java.time.Duration
 import java.util.concurrent.CompletableFuture
@@ -48,7 +48,7 @@ import kotlin.math.pow
 // p = 90940
 // 90940 Pa
 
-class BMP180(val board: Board, val mode: Mode = Mode.ULTRA_LOW_POWER) : Barometer<BMP180>, Thermometer<BMP180>, Runnable {
+class BMP180(val board: IODevice, val mode: Mode = Mode.ULTRA_LOW_POWER) : Barometer<BMP180>, Thermometer<BMP180>, Runnable {
 
     @Suppress("PropertyName")
     data class CalibrationData(

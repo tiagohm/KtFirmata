@@ -1,20 +1,17 @@
 package kt.firmata.hardware
 
-import kt.firmata.core.IOEvent
-import kt.firmata.core.OnPinChangeListener
-import kt.firmata.core.OnStopListener
-import kt.firmata.core.Pin
-import kt.firmata.core.protocol.board.Board
+import kt.firmata.core.*
 import kt.firmata.core.protocol.message.ReportAnalogPin
+import org.apache.commons.lang3.time.StopWatch
 import java.time.Duration
 
-data class LM35(val board: Board, val pin: Pin, val aref: Double = 5.0) : Thermometer<LM35>, OnPinChangeListener {
+data class LM35(val board: IODevice, val pin: Pin, val aref: Double = 5.0) : Thermometer<LM35>, OnPinChangeListener, Runnable {
 
     private val thermometerListeners = HashSet<ThermometerListener<LM35>>()
+    private val stopWatch = StopWatch()
 
-    @Volatile private var value = 0
     @Volatile private var freqTime = 0L
-    @Volatile private var prevTime = 0L
+    @Volatile private var firstTime = true
 
     @Volatile override var temperature = 0.0
         private set
@@ -36,8 +33,14 @@ data class LM35(val board: Board, val pin: Pin, val aref: Double = 5.0) : Thermo
     @Synchronized
     override fun start(freq: Duration) {
         freqTime = freq.toMillis()
+        stopWatch.start()
         board.sendMessage(ReportAnalogPin(pin, true))
         board.addEventListener(this)
+    }
+
+    override fun run() {
+        temperature = aref * 1000.0 * pin.value / 10230.0
+        thermometerListeners.forEach { it.onTemperatureChange(this) }
     }
 
     @Synchronized
@@ -47,14 +50,13 @@ data class LM35(val board: Board, val pin: Pin, val aref: Double = 5.0) : Thermo
     }
 
     override fun accept(event: IOEvent) {
-        if (value != event.value &&
-            (freqTime <= 0L || System.currentTimeMillis() - prevTime >= freqTime) &&
-            event.pin === pin
-        ) {
-            value = event.value
-            prevTime = System.currentTimeMillis()
-            temperature = aref * 1000.0 * event.value / 10230.0
-            thermometerListeners.forEach { it.onTemperatureChange(this) }
+        if (event.pin === pin && (firstTime || stopWatch.time >= freqTime)) {
+            firstTime = false
+
+            run()
+
+            stopWatch.reset()
+            stopWatch.start()
         }
     }
 }
