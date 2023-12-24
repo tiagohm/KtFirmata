@@ -2,13 +2,12 @@ package kt.firmata.core
 
 import kt.firmata.core.protocol.fsm.Event
 import kt.firmata.core.protocol.message.FirmataMessage
+import java.io.Closeable
 import java.util.function.Consumer
 
-interface IODevice {
+interface IODevice : Closeable {
 
     fun start()
-
-    fun stop()
 
     fun ensureInitializationIsDone()
 

@@ -1,3 +1,5 @@
+import org.springframework.boot.gradle.tasks.bundling.BootJar
+
 plugins {
     kotlin("jvm")
     id("maven-publish")
@@ -11,6 +13,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter")
     implementation(libs.hivemq)
     implementation(libs.jSerialComm)
+    implementation(libs.harawata)
     implementation(libs.logback)
     testImplementation(libs.bundles.kotest)
 }
@@ -20,5 +23,14 @@ publishing {
         create<MavenPublication>("pluginMaven") {
             from(components["java"])
         }
+    }
+}
+
+tasks.withType<BootJar> {
+    archiveFileName = "kt-firmata-server.jar"
+    destinationDirectory = file("$rootDir")
+
+    manifest {
+        attributes["Start-Class"] = "kt.firmata.server.MainKt"
     }
 }

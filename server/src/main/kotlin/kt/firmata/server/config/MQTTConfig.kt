@@ -1,4 +1,4 @@
-package kt.firmata.server
+package kt.firmata.server.config
 
 import com.hivemq.client.mqtt.MqttClient
 import com.hivemq.client.mqtt.mqtt3.Mqtt3AsyncClient

@@ -69,7 +69,7 @@ abstract class Board(
         }
     }
 
-    final override fun stop() {
+    final override fun close() {
         shutdown()
 
         val event = IOEvent(this)
