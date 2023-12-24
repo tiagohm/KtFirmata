@@ -31,8 +31,8 @@ data class LM35(val board: IODevice, val pin: Pin, val aref: Double = 5.0) : The
     }
 
     @Synchronized
-    override fun start(freq: Duration) {
-        freqTime = freq.toMillis()
+    override fun start(period: Duration) {
+        freqTime = period.toMillis()
         stopWatch.start()
         board.sendMessage(ReportAnalogPin(pin, true))
         board.addEventListener(this)
@@ -50,7 +50,7 @@ data class LM35(val board: IODevice, val pin: Pin, val aref: Double = 5.0) : The
     }
 
     override fun accept(event: IOEvent) {
-        if (event.pin === pin && (firstTime || stopWatch.time >= freqTime)) {
+        if (thermometerListeners.isNotEmpty() && event.pin === pin && (firstTime || stopWatch.time >= freqTime)) {
             firstTime = false
 
             run()

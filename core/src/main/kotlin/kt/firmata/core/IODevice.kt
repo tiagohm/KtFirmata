@@ -7,6 +7,22 @@ import java.util.function.Consumer
 
 interface IODevice : Closeable {
 
+    val numberOfDigitalPins: Int
+    val numberOfAnalogPins: Int
+
+    fun isPinLED(pin: Pin) = false
+    fun isPinDigital(pin: Pin): Boolean
+    fun isPinAnalog(pin: Pin): Boolean
+    fun isPinPWM(pin: Pin): Boolean
+    fun isPinServo(pin: Pin): Boolean
+    fun isPinI2C(pin: Pin): Boolean
+    fun isPinSPI(pin: Pin): Boolean
+
+    fun pinToDigitalIndex(pin: Pin): Int
+    fun pinToAnalogIndex(pin: Pin): Int
+    fun pinToPWMIndex(pin: Pin): Int
+    fun pinToServoIndex(pin: Pin): Int
+
     fun start()
 
     fun ensureInitializationIsDone()

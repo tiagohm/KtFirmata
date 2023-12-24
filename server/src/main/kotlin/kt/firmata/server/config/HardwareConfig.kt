@@ -7,7 +7,9 @@ import kt.firmata.core.protocol.transport.SerialTransport
 import kt.firmata.hardware.AM2320
 import kt.firmata.hardware.BMP180
 import kt.firmata.hardware.LM35
+import kt.firmata.hardware.Led
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import java.nio.file.Path
@@ -64,6 +66,24 @@ class HardwareConfig {
     @Bean
     fun bmp180(board: IODevice): BMP180 {
         return BMP180(board)
+    }
+
+    @Bean
+    @Qualifier("outputs")
+    fun lampada(board: IODevice): Led {
+        return Led(board, board.pinAt(ArduinoUno.D2))
+    }
+
+    @Bean
+    @Qualifier("outputs")
+    fun raspberry(board: IODevice): Led {
+        return Led(board, board.pinAt(ArduinoUno.D3))
+    }
+
+    @Bean
+    @Qualifier("outputs")
+    fun montagem(board: IODevice): Led {
+        return Led(board, board.pinAt(ArduinoUno.D4))
     }
 
     companion object {

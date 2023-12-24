@@ -1,6 +1,6 @@
 package kt.firmata.core.protocol.message
 
-import kt.firmata.core.protocol.board.Board
+import kt.firmata.core.IODevice
 import kt.firmata.core.protocol.parser.FirmataToken.END_SYSEX
 import kt.firmata.core.protocol.parser.FirmataToken.START_SYSEX
 import kt.firmata.core.protocol.parser.FirmataToken.STRING_DATA
@@ -8,7 +8,7 @@ import kt.firmata.core.protocol.transport.Transport
 
 data class Text(val message: String) : FirmataMessage {
 
-    override fun sendTo(board: Board, transport: Transport) {
+    override fun sendTo(board: IODevice, transport: Transport) {
         transport.write(START_SYSEX)
         transport.write(STRING_DATA)
 

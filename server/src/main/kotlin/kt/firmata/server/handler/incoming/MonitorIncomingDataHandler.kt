@@ -14,6 +14,8 @@ class MonitorIncomingDataHandler(
 
     private val regex = Regex("$id/monitor")
 
+    override val topic = "monitor"
+
     override fun handle(topic: String, data: String): Boolean {
         regex.matchEntire(topic) ?: return false
 

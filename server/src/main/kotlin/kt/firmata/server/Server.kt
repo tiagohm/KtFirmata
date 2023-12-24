@@ -24,7 +24,7 @@ class Server(
     @Autowired private val incomingDataHandlers: List<IncomingDataHandler>,
 ) : Runnable, Consumer<Mqtt3Publish>,
     ThermometerListener<Thermometer<*>>, HygrometerListener<Hygrometer<*>>,
-    BarometerListener<Barometer<*>>, AltimeterListener<Altimeter<*>> {
+    BarometerListener<Barometer<*>>, AltimeterListener<Altimeter<*>>, DigitalInputListener<DigitalInput<*>> {
 
     @PostConstruct
     override fun run() {
@@ -32,28 +32,33 @@ class Server(
             register(hardware)
         }
 
-        subscribe("monitor")
-        subscribe("pinWrite")
+        for (handler in incomingDataHandlers) {
+            subscribe(handler.topic)
+        }
 
         client.publishes(MqttGlobalPublishFilter.ALL, this)
     }
 
     fun register(hardware: Hardware) {
         if (hardware is Thermometer<*>) {
-            LOG.info("{} was registered as thermometer", hardware.name)
+            LOG.info("{} ({}) was registered as thermometer", hardware.name, hardware::class.qualifiedName)
             hardware.registerThermometerListener(this)
         }
         if (hardware is Hygrometer<*>) {
-            LOG.info("{} was registered as hygrometer", hardware.name)
+            LOG.info("{} ({}) was registered as hygrometer", hardware.name, hardware::class.qualifiedName)
             hardware.registerHygrometerListener(this)
         }
         if (hardware is Barometer<*>) {
-            LOG.info("{} was registered as barometer", hardware.name)
+            LOG.info("{} ({}) was registered as barometer", hardware.name, hardware::class.qualifiedName)
             hardware.registerBarometerListener(this)
         }
         if (hardware is Altimeter<*>) {
-            LOG.info("{} was registered as altimeter", hardware.name)
+            LOG.info("{} ({}) was registered as altimeter", hardware.name, hardware::class.qualifiedName)
             hardware.registerAltimeterListener(this)
+        }
+        if (hardware is DigitalInput<*>) {
+            LOG.info("{} ({}) was registered as digital input", hardware.name, hardware::class.qualifiedName)
+            hardware.registerDigitalInputListener(this)
         }
 
         hardware.start(POOLING_TIME)
@@ -73,6 +78,9 @@ class Server(
         }
         if (hardware is Altimeter<*>) {
             hardware.unregisterAltimeterListener(this)
+        }
+        if (hardware is DigitalInput<*>) {
+            hardware.unregisterDigitalInputListener(this)
         }
     }
 
@@ -101,6 +109,10 @@ class Server(
 
     override fun onAltitudeChange(altimeter: Altimeter<*>) {
         publish("${altimeter.name}/altitude", "%.01f".format(Locale.ENGLISH, altimeter.altitude))
+    }
+
+    override fun onDigitalInputChange(digitalInput: DigitalInput<*>) {
+        publish("${digitalInput.name}/pinRead", if (digitalInput.value) "1" else "0")
     }
 
     fun subscribe(topic: String) {

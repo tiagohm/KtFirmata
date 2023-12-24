@@ -1,7 +1,7 @@
 package kt.firmata.core.protocol.message
 
+import kt.firmata.core.IODevice
 import kt.firmata.core.protocol.FirmataI2CDevice
-import kt.firmata.core.protocol.board.Board
 import kt.firmata.core.protocol.parser.FirmataToken.END_SYSEX
 import kt.firmata.core.protocol.parser.FirmataToken.I2C_READ
 import kt.firmata.core.protocol.parser.FirmataToken.I2C_READ_CONTINUOUS
@@ -13,7 +13,7 @@ import kt.firmata.core.protocol.transport.Transport
 
 data class I2CReadRequest(val slaveAddress: Int, val register: Int, val bytesToRead: Int, val continuous: Boolean = false) : FirmataMessage {
 
-    override fun sendTo(board: Board, transport: Transport) {
+    override fun sendTo(board: IODevice, transport: Transport) {
         transport.write(START_SYSEX)
         transport.write(I2C_REQUEST)
         transport.write(slaveAddress)

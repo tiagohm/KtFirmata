@@ -82,10 +82,10 @@ class AM2320(val board: IODevice) : Thermometer<AM2320>, Hygrometer<AM2320>, Run
     }
 
     @Synchronized
-    override fun start(freq: Duration) {
+    override fun start(period: Duration) {
         if (task == null) {
             device.subscribe(this)
-            task = HardwareScheduler.scheduleAtFixedRate(this, 1000L, max(MIN_DELAY.toMillis(), freq.toMillis()), TimeUnit.MILLISECONDS)
+            task = HardwareScheduler.scheduleAtFixedRate(this, 1000L, max(MIN_DELAY.toMillis(), period.toMillis()), TimeUnit.MILLISECONDS)
         }
     }
 

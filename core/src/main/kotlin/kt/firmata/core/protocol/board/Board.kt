@@ -39,22 +39,6 @@ abstract class Board(
         transport.parser = parser
     }
 
-    abstract val numberOfDigitalPins: Int
-    abstract val numberOfAnalogPins: Int
-
-    open fun isPinBlink(pin: Pin) = false
-    abstract fun isPinDigital(pin: Pin): Boolean
-    abstract fun isPinAnalog(pin: Pin): Boolean
-    abstract fun isPinPWM(pin: Pin): Boolean
-    abstract fun isPinServo(pin: Pin): Boolean
-    abstract fun isPinI2C(pin: Pin): Boolean
-    abstract fun isPinSPI(pin: Pin): Boolean
-
-    abstract fun pinToDigitalIndex(pin: Pin): Int
-    abstract fun pinToAnalogIndex(pin: Pin): Int
-    abstract fun pinToPWMIndex(pin: Pin): Int
-    abstract fun pinToServoIndex(pin: Pin): Int
-
     final override fun start() {
         if (!started.getAndSet(true)) {
             try {

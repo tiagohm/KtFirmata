@@ -7,5 +7,5 @@ interface Hardware : Closeable {
 
     val name: String
 
-    fun start(freq: Duration = Duration.ZERO)
+    fun start(period: Duration = Duration.ZERO)
 }

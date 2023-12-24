@@ -119,7 +119,7 @@ class BMP180(val board: IODevice, val mode: Mode = Mode.ULTRA_LOW_POWER) : Barom
     }
 
     @Synchronized
-    override fun start(freq: Duration) {
+    override fun start(period: Duration) {
         if (task == null) {
             device.ask(COEFFICIENTS_REG, 22) {
                 with(calibrationData) {
@@ -141,7 +141,7 @@ class BMP180(val board: IODevice, val mode: Mode = Mode.ULTRA_LOW_POWER) : Barom
                     )
 
                     task = HardwareScheduler
-                        .scheduleAtFixedRate(this@BMP180, 1000L, max(MIN_DELAY.toMillis(), freq.toMillis()), TimeUnit.MILLISECONDS)
+                        .scheduleAtFixedRate(this@BMP180, 1000L, max(MIN_DELAY.toMillis(), period.toMillis()), TimeUnit.MILLISECONDS)
                 }
             }
         }
